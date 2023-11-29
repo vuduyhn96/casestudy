@@ -1,6 +1,9 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 
+const scoreEl = document.querySelector('#scoreEl')
+
+
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
@@ -127,7 +130,7 @@ function spawnEnemies() {
 }
 
 let animationId;
-
+let score = 0
 function animate() {
     animationId = requestAnimationFrame(animate);
     c.fillStyle = 'rgba(0, 0, 0, 0.1)';
@@ -185,7 +188,10 @@ function animate() {
                         )
                     );
                 }
+
                 if (enemy.radius - 10 > 5) {
+                    score += 100
+                    scoreEl.innerHTML = score
                     gsap.to(enemy, {
                         radius: enemy.radius - 10,
                     });
@@ -193,6 +199,8 @@ function animate() {
                         projectiles.splice(projectileIndex, 1);
                     }, 0);
                 } else {
+                    score += 150
+                    scoreEl.innerHTML = score
                     setTimeout(() => {
                         enemies.splice(index, 1);
                         projectiles.splice(projectileIndex, 1);
