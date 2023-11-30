@@ -1,8 +1,12 @@
-let canvas = document.querySelector('canvas');
-let c = canvas.getContext('2d');
+const canvas = document.querySelector('canvas');
+const c = canvas.getContext('2d');
 
-let scoreEl = document.querySelector('#scoreEl');
-
+const scoreEl = document.querySelector('#scoreEl')
+const modalEl = document.querySelector('#modalEl')
+const modalScoreDisplay = document.querySelector('#modalScoreDisplay')
+const buttonEl = document.querySelector('#buttonEl')
+const startButtonAd = document.querySelector('#startButtonAd')
+const startModalEl = document.querySelector('#startModalEl')
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
@@ -68,7 +72,7 @@ class Enemy {
     }
 }
 
-let friction = 0.98;
+const friction = 0.98
 class Particle {
     constructor(x, y, radius, color, velocity) {
         this.x = x;
@@ -76,39 +80,51 @@ class Particle {
         this.radius = radius;
         this.color = color;
         this.velocity = velocity;
-        this.alpha = 1;
+        this.alpha = 1
     }
     draw() {
-        c.save();
-        c.globalAlpha = this.alpha;
+        c.save()
+        c.globalAlpha = this.alpha
         c.beginPath();
         c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         c.fillStyle = this.color;
         c.fill();
-        c.restore();
+        c.restore()
     }
 
     update() {
         this.draw();
-        this.velocity.x *= friction;
-        this.velocity.y *= friction;
+        this.velocity.x *= friction
+        this.velocity.y *= friction
         this.x = this.x + this.velocity.x;
         this.y = this.y + this.velocity.y;
-        this.alpha -= 0.01;
+        this.alpha -= 0.01
     }
 }
 
-let x = canvas.width / 2;
-let y = canvas.height / 2;
+const x = canvas.width / 2;
+const y = canvas.height / 2;
 
-let player = new Player(x, y, 10, 'white');
+let player;
 let projectiles = [];
 let enemies = [];
-let particles = []; // Thêm mảng particles
+let particles = [];
+let animationId;
+let intervalId;
+let score = 0;
+
+function init() {
+    player = new Player(x, y, 10, 'white');
+    projectiles = [];
+    enemies = [];
+    particles = [];
+    score = 0;
+    modalEl.style.display = 'none';
+}
 
 function spawnEnemies() {
-    setInterval(() => {
-        let radius = Math.random() * (30 - 4) + 4;
+    intervalId = setInterval(() => {
+        const radius = Math.random() * (30 - 4) + 4;
         let x;
         let y;
         if (Math.random() < 0.5) {
@@ -119,31 +135,34 @@ function spawnEnemies() {
             y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
         }
 
-        let color = `hsl(${Math.random() * 360}, 50%, 50%)`;
-        let angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x);
-        let velocity = { x: Math.cos(angle), y: Math.sin(angle) };
+        const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
+        const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x);
+        const velocity = { x: Math.cos(angle), y: Math.sin(angle) };
 
         enemies.push(new Enemy(x, y, radius, color, velocity));
         console.log(enemies);
     }, 1000);
 }
 
-let animationId;
-let score = 0;
 function animate() {
     animationId = requestAnimationFrame(animate);
     c.fillStyle = 'rgba(0, 0, 0, 0.1)';
     c.fillRect(0, 0, canvas.width, canvas.height);
 
     player.draw();
-    for (let particle of particles) {
+    for (let index = particles.length - 1; index >= 0; index--) {
+        const particle = particles[index]
+
         if (particle.alpha <= 0) {
-            particles.splice(particles.indexOf(particle), 1);
+            particles.splice(index, 1)
         } else {
             particle.update();
         }
+
     }
-    for (let projectile of projectiles) {
+    for (let index = projectiles.length - 1; index >= 0; index--) {
+        const projectile = projectiles[index]
+
         projectile.update();
 
         if (
@@ -152,20 +171,28 @@ function animate() {
             projectile.y + projectile.radius < 0 ||
             projectile.y - projectile.radius > canvas.height
         ) {
-            projectiles.splice(projectiles.indexOf(projectile), 1);
+
+            projectiles.splice(index, 1);
         }
     }
-    for (let enemy of enemies) {
+    for (let index = enemies.length - 1; index >= 0; index--) {
+        const enemy = enemies[index]
+
+
         enemy.update();
-        let dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+        const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
 
         if (dist - enemy.radius - player.radius < 1) {
+            clearInterval(intervalId)
             cancelAnimationFrame(animationId);
+            modalEl.style.display = 'block'
+            modalScoreDisplay.innerHTML = score
         }
         for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
-            let projectile = projectiles[projectileIndex];
+            const projectile = projectiles[projectileIndex]
 
-            let dist = Math.hypot(
+
+            const dist = Math.hypot(
                 projectile.x - enemy.x,
                 projectile.y - enemy.y
             );
@@ -180,38 +207,38 @@ function animate() {
                             enemy.color,
                             {
                                 x: (Math.random() - 0.5) * (Math.random() * 6),
-                                y: (Math.random() - 0.5) * (Math.random() * 6),
+                                y: (Math.random() - 0.5) * (Math.random() * 6)
                             }
                         )
                     );
                 }
 
                 if (enemy.radius - 10 > 5) {
-                    score += 100;
-                    scoreEl.innerHTML = score;
+                    score += 100
+                    scoreEl.innerHTML = score
                     gsap.to(enemy, {
                         radius: enemy.radius - 10,
                     });
 
                     projectiles.splice(projectileIndex, 1);
+
                 } else {
-                    score += 150;
-                    scoreEl.innerHTML = score;
-                    enemies.splice(enemies.indexOf(enemy), 1);
+                    score += 150
+                    scoreEl.innerHTML = score
+                    enemies.splice(index, 1);
                     projectiles.splice(projectileIndex, 1);
                 }
             }
         }
     }
 }
-
 addEventListener('click', (event) => {
     console.log(projectiles);
-    let angle = Math.atan2(
+    const angle = Math.atan2(
         event.clientY - canvas.height / 2,
         event.clientX - canvas.width / 2
     );
-    let velocity = {
+    const velocity = {
         x: Math.cos(angle) * 4,
         y: Math.sin(angle) * 4,
     };
@@ -226,5 +253,18 @@ addEventListener('click', (event) => {
     );
 });
 
-animate();
-spawnEnemies();
+buttonEl.addEventListener('click', () => {
+    clearInterval(intervalId);
+    cancelAnimationFrame(animationId);
+    init();
+    animate();
+    spawnEnemies();
+    modalEl.style.display = 'none';
+});
+startButtonAd.addEventListener('click', () => {
+    init();
+    animate();
+    spawnEnemies();
+    startModalEl.style.display = 'none';
+})
+init();
